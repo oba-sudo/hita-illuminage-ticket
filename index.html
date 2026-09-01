@@ -26,8 +26,6 @@
   }
   .pill{
     position:absolute;
-    left:29.2%; width:41%;
-    top:70.9%; height:3.4%;
     border-radius:999px;
     display:flex; align-items:center; justify-content:center;
     font-weight:700;
@@ -42,8 +40,6 @@
 
   .btn{
     position:absolute;
-    left:13.8%; width:72.4%;
-    top:75.2%; height:4.9%;
     border-radius:999px;
     border: 1.5px solid #d9b463;
     display:flex; align-items:center; justify-content:center;
@@ -68,7 +64,7 @@
   .btn span.arrow{ font-size: clamp(13px, 4vw, 18px); }
 
   .used-at{
-    position:absolute; left:14%; width:72%; top:80.4%;
+    position:absolute; left:14%; width:72%;
     text-align:center; color:#8FA0BC; font-size: clamp(9px, 2.6vw, 11px);
   }
 
@@ -95,10 +91,14 @@
 <div class="switcher" id="switcher"></div>
 
 <script>
+  // pos: [badgeLeft%, badgeWidth%, badgeTop%, badgeHeight%, btnLeft%, btnWidth%, btnTop%, btnHeight%]
   const stores = {
-    museum:  { name: "進撃の巨人ミュージアム", img: "museum.png" },
-    cafe:    { name: "進撃の巨人カフェ",       img: "cafe.png" },
-    sapporo: { name: "日田森のビール園",       img: "sapporo.png" }
+    museum:  { name: "進撃の巨人ミュージアム", img: "museum.png",
+      pos: [29.41,40.0,71.31,2.97, 14.12,71.76,75.63,4.48] },
+    cafe:    { name: "進撃の巨人カフェ",       img: "cafe.png",
+      pos: [29.34,39.91,71.27,2.98, 11.74,73.94,75.77,3.90] },
+    sapporo: { name: "日田森のビール園",       img: "sapporo.png",
+      pos: [29.34,39.91,72.20,2.98, 11.74,73.94,76.64,3.96] }
   };
 
   const params = new URLSearchParams(window.location.search);
@@ -115,6 +115,19 @@
   const pill = document.getElementById("pill");
   const btn = document.getElementById("btn");
   const usedAtEl = document.getElementById("usedAt");
+
+  function applyPosition(){
+    const [bl,bw,bt,bh, xl,xw,xt,xh] = stores[storeId].pos;
+    pill.style.left = bl + "%";
+    pill.style.width = bw + "%";
+    pill.style.top = bt + "%";
+    pill.style.height = bh + "%";
+    btn.style.left = xl + "%";
+    btn.style.width = xw + "%";
+    btn.style.top = xt + "%";
+    btn.style.height = xh + "%";
+    usedAtEl.style.top = (xt + xh + 1.2) + "%";
+  }
 
   function setBackground(){ card.style.backgroundImage = `url(${stores[storeId].img})`; }
   function statusKey(){ return `hita-ticket:${storeId}:${deviceId}`; }
@@ -159,6 +172,7 @@
         storeId = id;
         [...switcherEl.children].forEach(c => c.className = "");
         b.className = "active";
+        applyPosition();
         setBackground();
         renderState();
       };
@@ -171,6 +185,7 @@
     deviceId = "dev-" + Math.random().toString(36).slice(2,10);
     try{ localStorage.setItem("hita-ticket-device-id", deviceId); }catch(e){}
   }
+  applyPosition();
   setBackground();
   renderState();
 </script>
