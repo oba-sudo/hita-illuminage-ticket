@@ -24,6 +24,38 @@
     background-position:center;
     background-repeat:no-repeat;
   }
+  .nameOverlay{
+    position:absolute;
+    background:#000;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    text-align:center;
+    padding:0 4%;
+    line-height:1.35;
+  }
+  .nameOverlay .main{
+    font-family: "Hiragino Mincho ProN", "Yu Mincho", serif;
+    font-weight:700;
+    color:#f2ede1;
+    font-size: clamp(15px, 5.2vw, 23px);
+  }
+  .nameOverlay .sub{
+    color:#caa24d;
+    letter-spacing:0.08em;
+    margin-top: 0.6em;
+    font-size: clamp(9px, 2.6vw, 12px);
+  }
+  .footerOverlay{
+    position:absolute;
+    background:#000;
+    display:flex;
+    align-items:center;
+    color:#f2ede1;
+    font-size: clamp(9px, 2.6vw, 11px);
+    line-height:1;
+  }
   .pill{
     position:absolute;
     border-radius:999px;
@@ -68,56 +100,62 @@
     text-align:center; color:#8FA0BC; font-size: clamp(9px, 2.6vw, 11px);
   }
 
-  .switcher{
-    position:fixed; left:0; right:0; bottom:10px;
-    display:flex; justify-content:center; gap:8px; z-index:5;
-  }
-  .switcher button{
-    font-size:11px; padding:6px 10px; border-radius:8px;
-    border:1px solid rgba(217,165,68,0.4); background:rgba(20,30,50,0.85);
-    color:#D9A544; cursor:pointer;
-  }
-  .switcher button.active{ background:#D9A544; color:#241606; }
-  .switcher-note{
-    position:fixed; left:0; right:0; bottom:38px; text-align:center;
-    font-size:10px; color:rgba(143,160,188,0.7);
-  }
 </style>
 </head>
 <body>
 
 <div class="card" id="card"></div>
-<div class="switcher-note" id="switcherNote"></div>
-<div class="switcher" id="switcher"></div>
 
 <script>
   // pos: [badgeLeft%, badgeWidth%, badgeTop%, badgeHeight%, btnLeft%, btnWidth%, btnTop%, btnHeight%]
+  // nameBox (optional): [left%, width%, top%, height%] — black overlay covering baked-in store name, for combined-store display
   const stores = {
-    museum:  { name: "進撃の巨人ミュージアム", img: "museum.png",
-      pos: [29.41,40.0,71.31,2.97, 14.12,71.76,75.63,4.48] },
-    cafe:    { name: "進撃の巨人カフェ",       img: "cafe.png",
-      pos: [29.34,39.91,71.27,2.98, 11.74,73.94,75.77,3.90] },
-    sapporo: { name: "日田森のビール園",       img: "sapporo.png",
-      pos: [29.34,39.91,72.20,2.98, 11.74,73.94,76.64,3.96] }
+    attackontitan: {
+      name: "進撃の巨人 in HITAミュージアムANNEX・進撃の日田カフェ",
+      nameSub: "ATTACK ON TITAN MUSEUM ANNEX & CAFE",
+      img: "museum.png",
+      pos: [29.41,40.0,71.31,2.97, 14.12,71.76,75.63,4.48],
+      nameBox: [7.06,87.06,27.01,23.77],
+      footerName: "進撃の巨人ミュージアム・カフェ",
+      footerBox: [34.71,49.41,96.44,1.78]
+    },
+    sapporo: {
+      name: "日田森のビール園",
+      img: "sapporo.png",
+      pos: [29.34,39.91,72.20,2.98, 11.74,73.94,76.64,3.96]
+    }
   };
+  // old individual-store links still resolve to the combined ticket
+  const aliasMap = { museum: "attackontitan", cafe: "attackontitan" };
 
   const params = new URLSearchParams(window.location.search);
-  let storeId = stores[params.get("store")] ? params.get("store") : "museum";
+  let requested = params.get("store");
+  requested = aliasMap[requested] || requested;
+  let storeId = stores[requested] ? requested : "attackontitan";
   let deviceId = null;
-  const hasStoreParam = !!stores[params.get("store")];
 
   const card = document.getElementById("card");
   card.innerHTML = `
+    <div class="nameOverlay" id="nameOverlay" style="display:none;">
+      <div class="main" id="nameMain"></div>
+      <div class="sub" id="nameSub"></div>
+    </div>
+    <div class="footerOverlay" id="footerOverlay" style="display:none;"></div>
     <div class="pill unused" id="pill"><span>未使用</span></div>
     <div class="btn unused" id="btn"><span class="label">利用する</span><span class="arrow">›</span></div>
     <div class="used-at" id="usedAt"></div>
   `;
+  const nameOverlay = document.getElementById("nameOverlay");
+  const nameMain = document.getElementById("nameMain");
+  const nameSub = document.getElementById("nameSub");
+  const footerOverlay = document.getElementById("footerOverlay");
   const pill = document.getElementById("pill");
   const btn = document.getElementById("btn");
   const usedAtEl = document.getElementById("usedAt");
 
   function applyPosition(){
-    const [bl,bw,bt,bh, xl,xw,xt,xh] = stores[storeId].pos;
+    const store = stores[storeId];
+    const [bl,bw,bt,bh, xl,xw,xt,xh] = store.pos;
     pill.style.left = bl + "%";
     pill.style.width = bw + "%";
     pill.style.top = bt + "%";
@@ -127,6 +165,31 @@
     btn.style.top = xt + "%";
     btn.style.height = xh + "%";
     usedAtEl.style.top = (xt + xh + 1.2) + "%";
+
+    if(store.nameBox){
+      const [nl,nw,nt,nh] = store.nameBox;
+      nameOverlay.style.left = nl + "%";
+      nameOverlay.style.width = nw + "%";
+      nameOverlay.style.top = nt + "%";
+      nameOverlay.style.height = nh + "%";
+      nameMain.textContent = store.name;
+      nameSub.textContent = store.nameSub || "";
+      nameOverlay.style.display = "flex";
+    } else {
+      nameOverlay.style.display = "none";
+    }
+
+    if(store.footerBox){
+      const [fl,fw,ft,fh] = store.footerBox;
+      footerOverlay.style.left = fl + "%";
+      footerOverlay.style.width = fw + "%";
+      footerOverlay.style.top = ft + "%";
+      footerOverlay.style.height = fh + "%";
+      footerOverlay.textContent = store.footerName;
+      footerOverlay.style.display = "flex";
+    } else {
+      footerOverlay.style.display = "none";
+    }
   }
 
   function setBackground(){ card.style.backgroundImage = `url(${stores[storeId].img})`; }
@@ -159,26 +222,6 @@
     setUsed();
     renderState();
   });
-
-  const switcherEl = document.getElementById("switcher");
-  const switcherNote = document.getElementById("switcherNote");
-  if(!hasStoreParam){
-    switcherNote.textContent = "※本番では店舗ごとに専用URL/QRを発行します(以下は確認用)";
-    Object.keys(stores).forEach(id => {
-      const b = document.createElement("button");
-      b.textContent = stores[id].name;
-      b.className = id === storeId ? "active" : "";
-      b.onclick = () => {
-        storeId = id;
-        [...switcherEl.children].forEach(c => c.className = "");
-        b.className = "active";
-        applyPosition();
-        setBackground();
-        renderState();
-      };
-      switcherEl.appendChild(b);
-    });
-  }
 
   deviceId = localStorage.getItem("hita-ticket-device-id");
   if(!deviceId){
