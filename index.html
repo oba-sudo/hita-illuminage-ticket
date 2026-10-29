@@ -16,7 +16,7 @@
     position:relative;
     width:100%;
     max-width:420px;
-    aspect-ratio: 852 / 1845;
+    aspect-ratio: 1556 / 1011;
     border-radius:14px;
     overflow:hidden;
     box-shadow: 0 24px 50px rgba(0,0,0,0.55);
@@ -40,23 +40,29 @@
     attackontitan: {
       name: "進撃の巨人 in HITAミュージアムANNEX・進撃の日田カフェ",
       img: "museum.png",
-      pos: [30.75,38.73,63.31,2.93, 15.26,69.48,67.75,4.50]
-    },
-    employee: {
-      name: "従業員ご優待券",
-      img: "employee.png",
-      aspect: "1556 / 1011",
-      maxWidth: 560,
-      cq: true,
-      pos: [59.58,31.11,66.37,7.32, 59.19,31.56,74.78,10.19]
+      aspect: "1556 / 1011", maxWidth: 560, cq: true,
+      pos: [58.80,31.23,70.72,6.73, 58.03,32.52,78.83,8.61]
     },
     sapporo: {
       name: "日田森のビール園",
       img: "sapporo.png",
-      pos: [29.58,38.85,66.13,2.71, 16.43,66.90,70.35,4.17]
+      aspect: "1556 / 1011", maxWidth: 560, cq: true,
+      pos: [58.80,31.23,70.72,6.73, 58.03,32.52,78.83,8.61]
+    },
+    hotel: {
+      name: "日田市内 旅館・ホテル宿泊者",
+      img: "hotel.png",
+      aspect: "1556 / 1011", maxWidth: 560, cq: true,
+      pos: [58.68,31.55,70.23,6.82, 58.10,32.52,78.44,8.80]
+    },
+    employee: {
+      name: "従業員ご優待券",
+      img: "employee.png",
+      aspect: "1556 / 1011", maxWidth: 560, cq: true,
+      pos: [59.58,31.11,66.37,7.32, 59.19,31.56,74.78,10.19]
     }
   };
-  const aliasMap = { museum: "attackontitan", cafe: "attackontitan" };
+  const aliasMap = { museum: "attackontitan", cafe: "attackontitan", "hotel-all": "hotel" };
 
   // ===== 従業員向け共通チケット（会社別IDで記録を分ける）=====
   const employee = {
@@ -123,6 +129,17 @@
   }
   const did = deviceId();
 
+  // ===== 利用記録（Googleスプレッドシート）=====
+  // Apps ScriptのウェブアプリURLをここに貼ります。空のままなら記録しません。
+  const LOG_URL = "";
+  function logEvent(op){
+    if (!LOG_URL) return;
+    try{
+      fetch(LOG_URL + "?id=" + encodeURIComponent(storeId) + "&op=" + op + "&d=" + encodeURIComponent(did),
+            { mode:"no-cors", keepalive:true });
+    }catch(e){}
+  }
+
   function statusKey(){ return `hita-ticket:${storeId}:${did}`; }
 
   function getStatus(){
@@ -137,6 +154,7 @@
   function setUsed(){
     const status = { used:true, usedAt: new Date().toISOString() };
     localStorage.setItem(statusKey(), JSON.stringify(status));
+    logEvent("use");
     renderState();
   }
 
@@ -164,6 +182,7 @@
   applyPosition();
   setBackground();
   renderState();
+  logEvent("view");
   window.addEventListener("resize", applyPosition);
 </script>
 </body>
